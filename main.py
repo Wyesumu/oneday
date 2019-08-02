@@ -168,7 +168,7 @@ def upload():
 			d1 = cur.execute("SELECT LastPostDate, Priveleges FROM Users WHERE Username = ?",(flask.session['username'],)).fetchone()
 
 		delta = dt.now() - dt.strptime(str(d1[0]), "%Y-%m-%d %H:%M") # and calculate how many time left since this date
-		if (delta.days * 24) + (delta.seconds // 3600) < 80 and d1[1] < 6: # if amout of hours less than 80 and level of privileges < 6 (new user get 5. 6 means admin blocked access for user manually)
+		if (delta.days * 24) + (delta.seconds // 3600) < 80 and d1[1] < 4: # if amout of hours less than 80 and level of privileges < 6 (new user get 5. 6 means admin blocked access for user manually)
 			if flask.request.method == 'POST':
 				# check if the post request has the file part
 				if 'file' not in flask.request.files:
@@ -288,7 +288,7 @@ def stats():
 				conn=connection()
 				with conn:
 					cur = conn.cursor() #date of of user's last post will set to today
-					cur.execute("UPDATE Users SET LastPostDate = ?, Priveleges = 5 WHERE Username = ?", (dt.now().strftime("%Y-%m-%d %H:%M"),username,))
+					cur.execute("UPDATE Users SET LastPostDate = ?, Priveleges = 3 WHERE Username = ?", (dt.now().strftime("%Y-%m-%d %H:%M"),username,))
 					conn.commit()
 				flask.flash("Доступ пользователю " + username + " восстановлен")
 				return flask.redirect(flask.url_for("stats"))
@@ -298,7 +298,7 @@ def stats():
 				with conn:
 					cur = conn.cursor() #then we set date of last post to january and set privileges to 6, so even if user will
 								#log out and log in again access won't back
-					cur.execute("UPDATE Users SET LastPostDate = '2019-01-01 01:01', Priveleges = 6 WHERE Username = ?", (username,))
+					cur.execute("UPDATE Users SET LastPostDate = '2019-01-01 01:01', Priveleges = 4 WHERE Username = ?", (username,))
 					conn.commit()
 				flask.flash("Доступ пользователю заблокирован")
 				return flask.redirect(flask.url_for("stats"))
