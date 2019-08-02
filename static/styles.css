@@ -1,0 +1,139 @@
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
+.container{
+  background-color: #F5F5F5;
+}
+
+.upload-containter{
+  background-color: white;
+  max-width: 53%;
+  margin-top: 1%;
+}
+
+.padding-1{
+  padding: 1%;
+}
+
+.card, .col-sm-2, .card-deck{
+  /*box-sizing: content-box;*/
+}
+
+.image-desc{
+    margin-left: auto;
+    margin-right: auto;
+    width: 62%;
+    max-width: 100%;
+    padding: 20px 15px 15px;
+}
+
+.show-xs{
+  visibility: hidden;
+}
+
+@include media-breakpoint-up(xs) {
+  .show-sx{
+    visibility: visible;
+  }
+}
+
+.nav-tabs{
+  border-bottom: 1px solid gray;
+}
+
+.nav-selected{
+  border-bottom: 2px solid gray;
+}
+
+.thumbnail{
+  position:relative;
+}
+
+.post-content {
+  background: none repeat scroll 0 0 #FFFFFF;
+  opacity: 0.7;
+  margin: 0px 5px 5px;
+  bottom: 0;
+  position: absolute;
+  width: 86%;
+  text-align: center;
+}
+
+.top-row{
+  background-color: white;
+}
+
+body{
+  background-color: #F5F5F5;
+  font-family: sans-serif;
+}
+
+html, body, .container{
+  height: 100%;
+}
+
+.no-padding{
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+.auto-height{
+  height: auto !important;
+}
+
+.btn-warning{
+  position: absolute;
+  bottom: 0
+}
+
+
+/*Autocomplete styles*/
+/*
+* { box-sizing: border-box; }
+body {
+  font: 16px Arial; 
+}
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+*/
+.autocomplete {
+  position: relative;
+}
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+}
+.autocomplete-items div:hover {
+  background-color: #e9e9e9; 
+}
+.autocomplete-active {
+
+  background-color: DodgerBlue !important; 
+  color: #ffffff; 
+}
+
+a {
+  color: #25a9f8;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: rgba(0, 0, 0);
+}

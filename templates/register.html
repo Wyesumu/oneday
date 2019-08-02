@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Register</title>
+    <link rel="stylesheet" href="static/bootstrap.css">
+    <link rel="stylesheet" href="static/styles.css">
+  </head>
+  <body>
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+      {{message}}
+    </div>
+    {%endfor%}
+    <div class="container">
+      <div class="row">
+          <div class="col">
+              <a href="/login">Назад</a>
+          </div>
+        </div>
+      <div class="row">
+        <div class="col-centered">
+          <h2>Register Form</h2>
+        </div>
+      </div>
+      <form action="/register" method="POST">
+        <div class="row">
+          <div class="col-md-4 col-centered ">
+              <input type="text" class="form-control" placeholder="Username" name="login">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 col-centered">
+              <input type="password" placeholder="Enter your Password" class="form-control" name="password">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 col-centered">
+              <input type="password" placeholder="Confirm your Password" class="form-control" name="password_check">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 col-centered">
+              <input type="password" placeholder="Enter a pass phrase" class="form-control" name="pass_phrase" title="Кодовое слово, которое сообщил вам куратор проекта">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 col-centered">
+              <input type="submit" class="btn btn-block btn-success">
+          </div>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

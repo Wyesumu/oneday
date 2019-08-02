@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  	<meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <title>{% block title %}{% endblock %}</title>
+      <link rel="stylesheet" href="/static/bootstrap.css">
+      <script src = "/static/jquery-3.4.1.min.js"> </script>
+      <script src = "/static/bootstrap.js"> </script>
+      <link rel="stylesheet" href="/static/styles.css">
+      {% block header %}{% endblock %}
+  </head>
+  <body>
+    <div class="container-fluid">
+      <header>
+         <div class="row top-row">
+           <div class = "col">
+              <nav class="navbar navbar-light navbar-expand-md">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar1">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbar1">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item nav-tabs {%if request.path == '/'%}nav-selected{%endif%}">
+                      <a class="nav-link" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item nav-tabs {%if request.path == '/stats'%}nav-selected{%endif%}">
+                      <a class="nav-link" href="/stats">Участники</a>
+                    </li>
+                    <li class="nav-item nav-tabs {%if request.path == '/upload'%}nav-selected{%endif%}">
+                      <a class="nav-link" href="/upload">Загрузить фото</a>
+                    </li>
+                    <li class="nav-item nav-tabs {%if request.path == '/cal'%}nav-selected{%endif%}">
+                      <a class="nav-link" href="/cal">Календарь</a>
+                    </li>
+                    <li class="div" style ="padding-top: 1%">
+                      {% if time_left -%}
+                        <a href="/refresh_time" title="Обновить таймер">{{time_left}}</a>
+                      {%- endif %}
+                    </li>
+                  </ul>
+                </div>
+              </nav>
+           </div>
+
+           <div align="right" class="col">
+            {%if username %}
+             <form class="nav-link" action="/exit" method="POST">
+               {{ username }} <input type ="submit" class="btn btn-danger" value="X" name="exit">
+             </form>
+            {%else%}
+              <form class="nav-link" action="/login" method="GET">
+               <input type ="submit" class="btn btn-success" value="Войти">
+             </form>
+            {%endif%}
+           </div>
+         </div>
+         {% for message in get_flashed_messages() %}
+         <div class="alert alert-warning">
+         		{{message}}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         {%endfor%}
+      
+      </header>
+    {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

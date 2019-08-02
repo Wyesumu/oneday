@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% block title %}Просмотр изображения{% endblock %}
+{% block content %}
+    <div class="row align-self-center image-desc">
+      <div class="col-md-6">
+        <h4><b>{{image[3]}}</b></h4>
+        <small>by: <a href="/user/{{image[2]}}">{{ image[2] }}</a> {{image[5]}}</small>
+      </div>
+      {%if username == image[2] or priveleges < 3 %}
+      <div class="col-md-6" align="right">
+        <form action="/image/{{image[0]}}" method="POST">
+          <button class="btn btn-danger" type="submit" name = "delete"> Удалить </button> 
+        </form>
+      </div>
+      {%endif%}
+    </div>
+    <div class="row">
+      <div class="col">
+        <a href="/images/{{image[1]}}" title="Открыть оригинал">
+          <img src="/resize/{{ image[1] }}" class="img-fluid mx-auto d-block">
+        </a>
+      </div>
+    </div>
+    {%for image in extra_image:%}
+    <div class="row">
+      <div class="col">
+        <a href="/images/{{image[0]}}" title="Открыть оригинал">
+          <img src="/resize/{{ image[0] }}" class="img-fluid mx-auto d-block" style="padding: 1%">
+        </a>
+      </div>
+    </div>
+    {%endfor%}
+    <div class="row">
+      <div class="col-md-6 align-self-center image-desc">
+        <p>{{image[4]}}</p>
+      </div>
+    </div>
+{% endblock %}

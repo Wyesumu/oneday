@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+{% block title %}Загрузить изображение{% endblock %}
+{%block header%}
+  <script src="static/jquery-3.4.1.min.js" type="text/javascript"></script>
+  <script src="static/gijgo.min.js" type="text/javascript"></script>
+  <link href="static/gijgo.min.css" rel="stylesheet" type="text/css" />
+{%endblock%}
+{% block content %}
+    <div class="container upload-containter">
+      <form autocomplete="off" action="/upload" method="POST" enctype=multipart/form-data>
+        <div class="col padding-1">
+          <h2>Загрузка работы</h2>
+        </div>
+        <div class="col padding-1">
+          <label for="file">Исходное изображение</label>
+          <input type="file" name="file" multiple="" id="file">
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="True" id="Check1" name="censor">
+          <label class="form-check-label" for="Check1" title="Выберите, если изображение 18+">
+            NSFW
+          </label>
+        </div>
+        <div class="col padding-1">
+          <label for="name">Название поста (Будет Untitled, если не указать)</label>
+          <input type="text" class="form-control" placeholder="" name="name" id=name>
+        </div>
+        <div class="col padding-1">
+          <label for="note">Примечание (необязательно)</label>
+          <input type="text" placeholder="" class="form-control" name="note" id=note>
+        </div>
+        <div class="col">
+          <label class="form-check-label" for="gotime_input">Время рисунка (Если не указать, то будет [дата последнего поста] + 1 день)</label>
+          <input id="time_input" name="time_input" title="Если вы упустили дед-лайн, то укажите время, в которое должны были выложить рисунок, дабы он правильно лег в календарь. Между постами не может быть > 1 дня">
+        </div>
+        <div class="col padding-1">
+          <input type="submit" value="Загрузить" class="btn btn-block btn-success">
+        </div>
+      </form>
+    </div>
+    <script>
+      $('#time_input').datetimepicker({ footer: true, modal: true, format: 'yyyy-mm-dd HH:MM', uiLibrary: 'bootstrap4' });
+    </script>
+{% endblock %}
