@@ -23,7 +23,7 @@ This project is web realization of the art challenge called "1day1page". The ide
 - Every uploaded art will show here with username and post name in title. Clicking event will open page with this art
 
 
-I will put some screenshots of site's pages, so you can see project in work. You can find it in "Examples" folder.
+In work you can see it here: https://1day1page.tk
 
 You can ask me any question. I will be glad to help you!
 
