@@ -26,3 +26,10 @@ This project is web realization of the art challenge called "1day1page". The ide
 I will put some screenshots of site's pages, so you can see project in work. You can find it in "Examples" folder.
 
 You can ask me any question. I will be glad to help you!
+
+==about privileges:
+privileges is coded in numbers:
+1 is admin. Admin won't show in users list
+2 is a curator of the project. Usually also upload works, can delete any work and ban/reset artists.
+3 is general artist. All new users have this level. Can delete it's own arts
+4 is banned. Can't upload, but can delete it's own arts.
