@@ -1,11 +1,10 @@
 # coding: utf-8
 import flask
 from functools import wraps
-
-import sqlite3
-
+#sqlalchemy
+from flask_sqlalchemy import SQLAlchemy
+#custom config
 import config
-
 #datetime
 from datetime import datetime as dt
 from datetime import date, timedelta
@@ -14,25 +13,54 @@ from flask_bcrypt import Bcrypt
 #os for file processing
 import os
 #image processings
-from PIL import Image, ImageFont, ImageFilter, ImageDraw
+from PIL import Image as ProcessImage
+from PIL import ImageFont, ImageFilter, ImageDraw
 from resize_and_crop import resize_and_crop
 from random import randrange
 #https connection
 #from OpenSSL import SSL
 
 app = flask.Flask(__name__)
+
 bcrypt = Bcrypt(app)
 app.secret_key = config.secret_key
 
-#tool functions
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + config.db_file
+db = SQLAlchemy(app)
 
-def connection(): #connection to sqlite3 database
-	try:
-		conn = sqlite3.connect(config.db_file)
-		return conn
-	except sqlite3.Error as e:
-		print(e)
-	return None
+#<databases classes>
+
+class User(db.Model):
+
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String())
+	password = db.Column(db.String())
+	privileges = db.Column(db.Integer, default = 3)
+	images = db.relationship('Image', backref='users', lazy=True)
+	last_post = db.Column(db.DateTime)
+
+	def __repr__(self):
+		return self.username
+
+class Image(db.Model):
+
+	id = db.Column(db.Integer, primary_key=True)
+	addr = db.Column(db.String())
+	user = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+	username = db.relationship("User", back_populates="images")
+	name = db.Column(db.String())
+	note = db.Column(db.String())
+	date = db.Column(db.DateTime, nullable=False)
+	extras = db.relationship('Extra', backref='images', lazy=True)
+
+class Extra(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	image = db.Column(db.Integer, db.ForeignKey("image.id"), nullable=False)
+	addr = db.Column(db.String())
+
+#/database classes/
+
+#<tool functions>
 
 #decorator to check if user logged in
 def is_logged(func):
@@ -55,16 +83,13 @@ def allowed_file(files): #check if file extension is allowed
 
 def getLastDate():
 	#this function finds date of the most recent post
-	conn=connection()
-	with conn:
-		cur = conn.cursor()
-		#get dates of all images by username
-		dates = cur.execute("SELECT Date FROM Images WHERE Creator = ?", (flask.session['username'],)).fetchall()
+	#get dates of all images by username
+	images = Image.query.filter_by(user=flask.session['user_id']).all()
 	datetime_list = []
 	try:
-		for date in dates:
+		for image in images:
 			#put all dates in list
-			datetime_list.append(dt.strptime(str(date[0]), "%Y-%m-%d %H:%M"))
+			datetime_list.append(image.date)
 		date = (max(datetime_list)) #and find the most recent one
 	except ValueError: #except if there's no any works in db (in case of new user)
 		date = dt.now() - timedelta(days=1) #and if so return date {today - 1 day} so new user will have two days to upload first post
@@ -89,7 +114,7 @@ def getUsername():
 
 #/tool functions/
 
-#paths for static files
+#<paths for static files>
 
 @app.route('/fonts/<path:path>')
 def send_fonts(path):
@@ -109,32 +134,28 @@ def send_thumbain(path):
 
 #/paths for static files/
 
-#session control
+#<session control>
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
 	if flask.request.method == 'POST':
 		#get data from form
-		login = flask.request.form["login"]
+		login = flask.request.form["login"] 
 		password = flask.request.form["password"]
-		conn = connection()
-		with conn:
-			cur = conn.cursor()
-			try:
-				#check if user in db
-				user_data = cur.execute("SELECT Password, Priveleges, FullName, LastPostDate FROM Users WHERE Username = ?", (login,)).fetchone()
-				if bcrypt.check_password_hash(user_data[0], str(password)): #compare user input and password hash from db
-					#set session info in crypted session cookie
-					flask.session['logged'] = "yes"
-					flask.session['username'] = login
-					flask.session['priveleges'] = user_data[1]
-					flask.session['full_name'] = user_data[2]
-					flask.session['last_post'] = user_data[3]
-					return flask.redirect(flask.url_for("index"))
-				else:
-					flask.flash("Wrong password. Try again")
-			except TypeError as e:
-				flask.flash("Wrong Login. Try again")
+		user_data = User.query.filter_by(username = login).first()
+		if user_data is not None:
+			if bcrypt.check_password_hash(user_data.password, str(password)): #compare user input and password hash from db
+				#set session info in crypted session cookie
+				flask.session['logged'] = "yes"
+				flask.session['username'] = login
+				flask.session['user_id'] = user_data.id
+				flask.session['privileges'] = user_data.privileges
+				flask.session['last_post'] = user_data.last_post.strftime("%Y-%m-%d %H:%M")
+				return flask.redirect(flask.url_for("index"))
+			else:
+				flask.flash("Wrong password. Try again")
+		else:
+			flask.flash("Wrong Login. Try again")
 	return flask.render_template("login.html")
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -149,19 +170,16 @@ def register():
 		elif f['pass_phrase'][0] != config.pass_phrase: #if passphrase is wrong
 			flask.flash('Неверно введена кодовая фраза')
 		else:
-			conn = connection()
-			with conn:
-				cur = conn.cursor()
-				#check if username already in db
-				if cur.execute("SELECT Username FROM Users WHERE Username = ?", (f["login"][0],)).fetchone():
-					flask.flash("Пользователь с таким именем уже существует")
-					return flask.redirect(flask.url_for("login"))
-				else:
-					#create new user
-					cur.execute("INSERT INTO Users(Username, Password, LastPostDate) VALUES(?,?,?)", (f["login"][0],bcrypt.generate_password_hash(str(f["password"][0])), dt.now().strftime("%Y-%m-%d %H:%M"),))
-					conn.commit()
-					return flask.redirect(flask.url_for("login"))
-		return flask.redirect(flask.url_for("register"))
+			#check if username already in db
+			if User.query.filter_by(username = f["login"][0]).first():
+				flask.flash("Пользователь с таким именем уже существует")
+			else:
+				#create new user
+				new_user = User(username = f["login"][0], last_post = dt.now(), password = bcrypt.generate_password_hash(str(f["password"][0])))
+				db.session.add(new_user)
+				db.session.commit()
+
+		return flask.redirect(flask.url_for("login"))
 	else:
 		return flask.render_template("register.html")
 
@@ -176,27 +194,33 @@ def exit():
 
 @app.route("/")
 def index():
-	conn = connection()
-	with conn:
-		cur = conn.cursor()
-		#get last 60 posts from db for gallery
-		images = cur.execute("SELECT ID, Addr, Creator, Name, Date FROM Images ORDER BY ID DESC LIMIT 60").fetchall()
-	return flask.render_template("index.html", images=images, username=getUsername(), time_left = time_left())
+	#get posts from db for gallery
+	data = Image.query.order_by(Image.id.desc())
+	return flask.render_template("index.html", data=data, username=getUsername(), time_left = time_left())
+
+@app.route('/user/<username>') #one artist only gallery
+def user_gallery(username):
+	data = Image.query.order_by(Image.id.desc()).filter_by(user = User.query.filter_by(username=username).first().id)
+	#using index template here, just return different data
+	return flask.render_template("index.html", data=data, username=getUsername())
 
 @app.route("/upload", methods=["GET","POST"])
 @is_logged
 def upload():
 #
-# Thus function is just a mess. I'm so sorry :-:
+# This function is just a mess. I'm so sorry :-:
 #
-	conn=connection()
-	with conn:
-		cur = conn.cursor() #get date of user's last post
-		d1 = cur.execute("SELECT LastPostDate, Priveleges FROM Users WHERE Username = ?",(flask.session['username'],)).fetchone()
+	data = User.query.get(flask.session['user_id']) #get last post date
+	#dt.strptime(str(data.last_post), "%Y-%m-%d %H:%M")
+	delta = dt.now() - data.last_post # and calculate how many time left since this date
 
-	delta = dt.now() - dt.strptime(str(d1[0]), "%Y-%m-%d %H:%M") # and calculate how many time left since this date
-	if (delta.days * 24) + (delta.seconds // 3600) < 80 and d1[1] < 4: # if amout of hours less than 80 and level of privileges < 6 (new user get 5. 6 means admin blocked access for user manually)
-		if flask.request.method == 'POST':
+	if (delta.days * 24) + (delta.seconds // 3600) > 80 or data.privileges == 4: # if amout of hours less than 80 and level of privileges < 4 (new user get 3. 4 means admin blocked access for user manually)
+		flask.flash("Вы не создавали записи более 3 дней. Доступ закрыт")
+		return flask.redirect(flask.url_for("index"))
+	else:
+		if flask.request.method == 'GET':
+			return flask.render_template("upload.html", username=flask.session['username'])
+		else:
 			# check if the post request has the file part
 			if 'file' not in flask.request.files:
 				flask.flash('Ошибка, файл не найден. Обратитесь к администратору')
@@ -215,8 +239,8 @@ def upload():
 					file.save(os.path.join(config.UPLOAD_FOLDER, filename[-1])) #save this file
 
 					#load saved file and resize it to 700x500 (it will be used inside post)
-					with Image.open(os.path.join(config.UPLOAD_FOLDER, filename[-1])) as image:
-						image.thumbnail((700, 560), Image.ANTIALIAS)
+					with ProcessImage.open(os.path.join(config.UPLOAD_FOLDER, filename[-1])) as image:
+						image.thumbnail((700, 560), ProcessImage.ANTIALIAS)
 						image.save(os.path.join(config.RESIZE_FOLDER, filename[-1])) #and save it
 
 				#again open original file and resize_and_crop middle of it so we can create a thumbnail
@@ -256,6 +280,7 @@ def upload():
 
 				last_date = getLastDate() #get the most recent date
 				day_more = last_date + timedelta(days=1) #add 1 day to this date
+
 				if flask.request.form['time_input'] == '': #if user didn't specified the date set recent date + 1 day
 					time_input = day_more.strftime("%Y-%m-%d %H:%M")
 					LastPostDate = day_more.strftime("%Y-%m-%d %H:%M")
@@ -269,36 +294,28 @@ def upload():
 						time_input = flask.request.form['time_input']
 						LastPostDate = flask.request.form['time_input']
 
-				conn=connection()
-				with conn:
-					cur = conn.cursor() #put new image in db
-					cur.execute("INSERT INTO Images(Addr, Creator, Name, Note, Date) VALUES(?,?,?,?,?)",(filename[0], flask.session['username'], name, flask.request.form['note'], time_input,))
-					image_id = cur.lastrowid
-					for i in range(1,len(files)): #if there was more than one image, put other images in the different table
-						cur.execute("INSERT INTO ExtraImages(Image_ID, Addr) VALUES(?,?)",(image_id, filename[i],))
-					cur.execute("UPDATE Users SET LastPostDate = ? WHERE Username = ?",(LastPostDate, flask.session['username'],)) #update date of user's last post
-					conn.commit()
+				new_image = Image(addr=filename[0], user=flask.session['user_id'], name=name, note=flask.request.form['note'],date=dt.strptime(str(time_input), "%Y-%m-%d %H:%M"))
+				db.session.add(new_image)
+				db.session.flush()
+				print(files)
+				print(filename)
+				for i in range(1,len(files)):
+					new_extra = Extra(image=new_image.id, addr=filename[i])
+					db.session.add(new_extra)
+				db.session.commit()
 				flask.session['last_post'] = LastPostDate #and also update cookies
 
 				return flask.redirect(flask.url_for("index")) #redirect user to index
 			else:
 				flask.flash("Invalid file type")
 				return flask.redirect(flask.url_for("index"))
-		else:
-			return flask.render_template("upload.html", username=flask.session['username'])
-	else:
-		flask.flash("Вы не создавали записи более 3 дней. Доступ закрыт")
-		return flask.redirect(flask.url_for("index"))
+			
+	
 		
 
 @app.route('/refresh_time') #refresh time in times on index
 def get_left_time():
 	last_date = getLastDate().strftime("%Y-%m-%d %H:%M")
-	conn = connection()
-	with conn:
-		cur = conn.cursor()
-		cur.execute("SELECT LastPostDate FROM Users WHERE Username = ?",(flask.session['username'],))
-		conn.commit()
 	flask.session["last_post"] = last_date
 	return flask.redirect(flask.url_for("index"))
 
@@ -308,89 +325,61 @@ def stats():
 	if flask.request.method == "POST":
 		r = flask.request.form.to_dict() #get all fields in dict
 		if "reset" in r: #if admin pushed reset button to give access to user back
-			username = flask.request.form["reset"]
-			conn=connection()
-			with conn:
-				cur = conn.cursor() #date of of user's last post will set to today
-				cur.execute("UPDATE Users SET LastPostDate = ?, Priveleges = 3 WHERE Username = ?", (dt.now().strftime("%Y-%m-%d %H:%M"),username,))
-				conn.commit()
-			flask.flash("Доступ пользователю " + username + " восстановлен")
+			user = User.query.get(r["reset"])
+			user.last_post = dt.now()
+			user.privileges = 3
+			flask.flash("Доступ пользователю " + user.username + " восстановлен")
+			db.session.commit()
 			return flask.redirect(flask.url_for("stats"))
 		if "block" in r: #if admin want to block access
-			username = flask.request.form["block"]
-			conn = connection()
-			with conn:
-				cur = conn.cursor() #then we set date of last post to january and set privileges to 6, so even if user will
-							#log out and log in again access won't back
-				cur.execute("UPDATE Users SET LastPostDate = '2019-01-01 01:01', Priveleges = 4 WHERE Username = ?", (username,))
-				conn.commit()
-			flask.flash("Доступ пользователю заблокирован")
+			user = User.query.get(r["block"])
+			user.privileges = 4
+			flask.flash("Доступ пользователю " + user.username + " заблокирован")
+			db.session.commit()
 			return flask.redirect(flask.url_for("stats"))
 	else: #GET request
-		conn=connection()
-		with conn:
-			cur = conn.cursor() #return list of users on GET request
-			users_stats = cur.execute('''SELECT Users.Username, Users.LastPostDate,
-							(SELECT COUNT(*) FROM Images WHERE Users.Username = Images.Creator) AS Counter
-							FROM Users
-								WHERE Users.Priveleges > 1;''').fetchall()
-		return flask.render_template("stats.html", username=flask.session['username'], stats = users_stats, priveleges=flask.session['priveleges'])
-
-@app.route('/user/<username>') #one artist only gallery
-def user_gallery(username):
-	conn = connection()
-	with conn:
-		cur = conn.cursor() #get all works by artist's name
-		images = cur.execute("SELECT ID, Addr, Creator, Name, Date FROM Images WHERE Creator = ? ORDER BY ID DESC", (username,)).fetchall()
-	#using index template here, just return different data
-	return flask.render_template("index.html", images=images, username=getUsername())
+		users = User.query.filter(User.privileges > 1).all()
+		return flask.render_template("stats.html", username=flask.session['username'], users = users, privileges=flask.session['privileges'])
 
 @app.route('/image/<int:image_id>', methods=["GET","POST"]) #this is what inside the post
 def full_image(image_id):
 	if flask.request.method == 'POST': #delete image
-		conn=connection()
-		with conn:
-			cur = conn.cursor() #get image filename
-			addr = cur.execute("SELECT Addr FROM Images WHERE ID = ?", (image_id,)).fetchone()
-			#if there are more than one images in the post, then get their filenames
-			extra_addr = cur.execute("SELECT Addr FROM ExtraImages WHERE Image_ID = ?", (image_id,)).fetchall()
-			cur.execute("DELETE FROM Images WHERE ID = ?", (image_id,)) #delete all images from db
-			cur.execute("DELETE FROM ExtraImages WHERE Image_ID = ?", (image_id,))
-			conn.commit()
-		
-			last_date = getLastDate().strftime("%Y-%m-%d %H:%M") #calculate new recent post date and insert into db
-			cur.execute("UPDATE Users SET LastPostDate = ? WHERE Username = ?",(last_date, flask.session['username'],))
-			conn.commit()
-		flask.session["last_post"] = last_date #update date in cookies too
-		
 		try:
-			os.remove(config.UPLOAD_FOLDER +'/'+ addr[0]) #delete all forms of image
-			os.remove(config.RESIZE_FOLDER +'/'+ addr[0])
-			os.remove(config.THUMBNAIL_FOLDER +'/'+ addr[0])
-			for el in extra_addr: #and delete extra images
-				os.remove(config.UPLOAD_FOLDER +'/'+ el[0])
-				os.remove(config.RESIZE_FOLDER +'/'+ el[0])
+
+			extra = Extra.query.filter_by(image=image_id).all()
+			for el in extra: #and delete extra images
+				db.session.delete(el)
+				os.remove(config.UPLOAD_FOLDER +'/'+ el.addr)
+				os.remove(config.RESIZE_FOLDER +'/'+ el.addr)
+
+			image = Image.query.get(image_id)
+			db.session.delete(image)
+
+			os.remove(config.UPLOAD_FOLDER +'/'+ image.addr) #delete all forms of image
+			os.remove(config.RESIZE_FOLDER +'/'+ image.addr)
+			os.remove(config.THUMBNAIL_FOLDER +'/'+ image.addr)
 		except FileNotFoundError:
 			flask.flash("Ошибка: Файл не найден")
 		finally:
-			flask.flash("Файл " + addr[0] + " успешно удален")
+			last_date = getLastDate()
+
+			user = User.query.get(image.user)
+			user.last_post = last_date
+			db.session.commit()
+
+			flask.session["last_post"] = last_date.strftime("%Y-%m-%d %H:%M") #update date in cookies too
+
+			flask.flash("Файл " + image.addr + " успешно удален")
 		return flask.redirect(flask.url_for("index"))
 
 	#if we just want to show bigger image
 	else: #if GET request return images
-		conn=connection()
-		with conn:
-			cur = conn.cursor()
-			image = cur.execute("SELECT * FROM Images WHERE ID = ?", (image_id,)).fetchone()
-			extra_image = cur.execute("SELECT Addr FROM ExtraImages WHERE Image_ID = ?", (image_id,)).fetchall()
-
+		image = Image.query.get(image_id)
 		if 'username' in flask.session:
-			username = flask.session['username']
-			priveleges = flask.session['priveleges']
+			privileges = flask.session['privileges']
 		else:
-			username = None
-			priveleges = 3
-		return flask.render_template("image.html", username=username, image=image, priveleges=priveleges, extra_image=extra_image)
+			privileges = 3
+		return flask.render_template("image.html", username=getUsername(), image=image, privileges=privileges)
 
 
 @app.route('/cal') #page with calendar
@@ -402,12 +391,9 @@ def return_data():
 	#start_date = flask.request.args.get('start', '')
 	#end_date = flask.request.args.get('end', '')
 	json = []
-	conn=connection()
-	with conn:
-		cur = conn.cursor()
-		images = cur.execute("SELECT ID, Creator, Name, Date FROM Images").fetchall()
+	images = Image.query.all()
 	for data in images:
-		json.append({"id":str(data[0]),"title":str(data[1]) + ", " + str(data[2]),"url":"/image/"+str(data[0]),"start":str(data[3]).replace(" ","T")})
+		json.append({"id":str(data.id),"title":str(data.name) + ", " + str(data.username),"url":"/image/"+str(data.id),"start":str(data.date).replace(" ","T")})
 	return flask.jsonify(json)
 
 
