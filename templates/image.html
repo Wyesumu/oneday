@@ -3,12 +3,12 @@
 {% block content %}
     <div class="row align-self-center image-desc">
       <div class="col-md-6">
-        <h4><b>{{image[3]}}</b></h4>
-        <small>by: <a href="/user/{{image[2]}}">{{ image[2] }}</a> {{image[5]}}</small>
+        <h4><b>{{image.name}}</b></h4>
+        <small>by: <a href="/user/{{image.username}}">{{ image.username }}</a> {{image.date}}</small>
       </div>
-      {%if username == image[2] or priveleges < 3 %}
+      {%if username == image.username.username or privileges < 3 %}
       <div class="col-md-6" align="right">
-        <form action="/image/{{image[0]}}" method="POST">
+        <form action="/image/{{image.id}}" method="POST">
           <button class="btn btn-danger" type="submit" name = "delete"> Удалить </button> 
         </form>
       </div>
@@ -16,23 +16,23 @@
     </div>
     <div class="row">
       <div class="col">
-        <a href="/images/{{image[1]}}" title="Открыть оригинал">
-          <img src="/resize/{{ image[1] }}" class="img-fluid mx-auto d-block">
+        <a href="/images/{{image.addr}}" title="Открыть оригинал">
+          <img src="/resize/{{ image.addr }}" class="img-fluid mx-auto d-block">
         </a>
       </div>
     </div>
-    {%for image in extra_image:%}
+    {%for image in image.extras:%}
     <div class="row">
       <div class="col">
-        <a href="/images/{{image[0]}}" title="Открыть оригинал">
-          <img src="/resize/{{ image[0] }}" class="img-fluid mx-auto d-block" style="padding: 1%">
+        <a href="/images/{{image.addr}}" title="Открыть оригинал">
+          <img src="/resize/{{ image.addr }}" class="img-fluid mx-auto d-block" style="padding: 1%">
         </a>
       </div>
     </div>
     {%endfor%}
     <div class="row">
       <div class="col-md-6 align-self-center image-desc">
-        <p>{{image[4]}}</p>
+        <p>{{image.note}}</p>
       </div>
     </div>
 {% endblock %}

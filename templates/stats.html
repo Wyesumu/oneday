@@ -4,14 +4,14 @@
 <div class="row">
   <div class="col no-padding">
   	<ul class="list-group list-group-flush" id="todo-list">
-  		{% for stat in stats: %}
+  		{% for user in users: %}
   			<li class="list-group-item">
   				<form action="/stats" method="POST">
-  					<b>Username:</b> <a href="/user/{{stat[0]}}">{{ stat[0] }}</a>; <b>Дата последнего поста:</b> {{ stat[1] }}; <b>Всего постов:</b> {{ stat[2] }};
-  					{% if priveleges < 3 %}
-  					<button class="btn btn-primary" type="submit" name = "reset" value = {{ stat[0] }} title="Ставит дату последнего поста сегодняшним днем, тем самым возвращает доступ пользователю к загрузке"> Восстановить </button> 
-	    	  			<button class="btn btn-danger" type="submit" name = "block" value = {{ stat[0] }}> Заблокировать </button>
-				</form>
+  					<b>Username:</b> <a href="/user/{{user.username}}">{{ user.username }}</a>; <b>Дата последнего поста:</b> {{ user.last_post.strftime("%Y-%m-%d %H:%M") }}; <b>Всего постов:</b> 0;
+  					{% if privileges < 3 %}
+  					<button class="btn btn-primary" type="submit" name = "reset" value = {{user.id}}> Восстановить </button> 
+	    	  	<button class="btn btn-danger" type="submit" name = "block" value = {{user.id}}> Заблокировать </button>
+				  </form>
 	    	  {%- endif %}
 	    	</li>	
 			{% endfor %}

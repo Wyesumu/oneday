@@ -2,18 +2,18 @@
 {% block title %}Главная{% endblock %}
 {% block content %}
 		<div class="card-deck">
-    	{% for image in images %}
+    	{% for image in data %}
       <div class="col-sm-2" style="padding-bottom: 1%">
     		<div class="card" style="min-width: 140px">
-    			<a href="/image/{{image[0]}}">
-    				<img src="/thumbnails/{{ image[1] }}"  class="card-img-top">
+    			<a href="/image/{{image.id}}">
+    				<img src="/thumbnails/{{ image.addr }}"  class="card-img-top">
           </a>
           <div class="card-body">
-            {%if image[3]%}<h5 class="card-title">{{ image[3] }}</h5><br>{%endif%}
-            <p class="card-text">Автор <a href="/user/{{image[2]}}">{{ image[2] }}</a></p>
+            <h5 class="card-title">{{ image.name }}</h5><br>
+            <p class="card-text">Автор <a href="/user/{{image.username}}">{{ image.username }}</a></p>
           </div>
           <div class="card-footer">
-            <small class="text-muted">{{ image[4] }}</small>
+            <small class="text-muted">{{ image.date }}</small>
           </div>
     		</div>
       </div>
