@@ -1,9 +1,20 @@
 {% extends 'layout.html' %}
 {% block title %}Главная{% endblock %}
 {% block content %}
+{% if data[0]%}
+  {% if stages[data[0].stage-1].user_win %}
+  <div class="jumbotron">
+    <h1 class="display-4">Этап завершен!</h1>
+    <p class="lead">Победителем оказался участник <a href="/user/{{stages[data[0].stage-1].user}}">{{stages[data[0].stage-1].user}}</a>, продержавшийся {{stages[data[0].stage-1].user.survived.days}} дней!</p>
+    <hr class="my-4">
+    <p>Этап начался {{stages[data[0].stage-1].start_date}} и завершился {{stages[data[0].stage-1].end_date}}.</p> 
+    <p>Всего участниками было загружено {{stages[data[0].stage-1].images|length}} работ(ы).</p>
+  </div>
+  {% endif %}
+{% endif %}
 		<div class="card-deck">
     	{% for image in data %}
-      <div class="col-sm-2" style="padding-bottom: 1%">
+      <div class="col-sm-2" style="padding-top: 1%">
     		<div class="card" style="min-width: 140px">
     			<a href="/image/{{image.id}}">
     				<img src="/thumbnails/{{ image.addr }}"  class="card-img-top">
@@ -13,7 +24,7 @@
             <p class="card-text">Автор <a href="/user/{{image.username}}">{{ image.username }}</a></p>
           </div>
           <div class="card-footer">
-            <small class="text-muted">{{ image.date }}</small>
+            <small class="text-muted">{{ image.date.strftime("%Y-%m-%d %H:%M") }}</small>
           </div>
     		</div>
       </div>
