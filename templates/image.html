@@ -6,7 +6,7 @@
         <h4><b>{{image.name}}</b></h4>
         <small>by: <a href="/user/{{image.username}}">{{ image.username }}</a> {{image.date}}</small>
       </div>
-      {%if username == image.username.username or privileges < 3 %}
+      {%if user.username == image.username or user.privileges < 2 %}
       <div class="col-md-6" align="right">
         <form action="/image/{{image.id}}" method="POST">
           <button class="btn btn-danger" type="submit" name = "delete"> Удалить </button> 
