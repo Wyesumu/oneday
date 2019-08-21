@@ -7,6 +7,7 @@
     <title>Login</title>
     <link rel="stylesheet" href="static/bootstrap.css">
     <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="static/login.css">
   </head>
   <body>
     <div class="container">
@@ -15,33 +16,19 @@
       {{message}}
     </div>
     {%endfor%}
-      <div class="row">
-        <div class="col-centered">
-          <h2>Login Form</h2>
-        </div>
-      </div>
-      <form action="/login" method="POST">
-        <div class="row">
-          <div class="col-md-4 col-centered">
-              <input type="text" class="form-control" placeholder="Username" name="login">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 col-centered">
-              <input type="password" placeholder="Enter your Password" class="form-control" name="password">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 col-centered">
-              <input type="submit" value="Log in" class="btn btn-block btn-success">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 col-centered">
-              <a href="/register">Регистрация</a>
-          </div>
-        </div>
+  <div class="wrapper fadeInDown">
+    <div id="formContent">
+      <!-- Login Form -->
+      <form action="" method="POST">
+        <input type="text" id="login" class="fadeIn first" name="login" placeholder="Login">
+        <input type="password" id="password" class="fadeIn second" name="password" placeholder="Password">
+        <input type="submit" class="fadeIn third" value="Log In">
       </form>
+      <div id="formFooter">
+        <a class="underlineHover" href="/register">Регистрация</a>
+      </div>
+    </div>
+  </div>
     </div>
   </body>
 </html>
