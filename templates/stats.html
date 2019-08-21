@@ -1,21 +1,30 @@
 {% extends 'layout.html' %}
 {% block title %}Статистика пользователей{% endblock %}
 {% block content %}
-<div class="row">
-  <div class="col no-padding">
-  	<ul class="list-group list-group-flush" id="todo-list">
-  		{% for user in users: %}
-  			<li class="list-group-item">
-  				<form action="/stats" method="POST">
-  					<b>Username:</b> <a href="/user/{{user.username}}">{{ user.username }}</a>; <b>Дата последнего поста:</b> {{ user.last_post.strftime("%Y-%m-%d %H:%M") }}; <b>Всего постов:</b> 0;
-  					{% if privileges < 3 %}
-  					<button class="btn btn-primary" type="submit" name = "reset" value = {{user.id}}> Восстановить </button> 
-	    	  	<button class="btn btn-danger" type="submit" name = "block" value = {{user.id}}> Заблокировать </button>
-				  </form>
-	    	  {%- endif %}
-	    	</li>	
-			{% endfor %}
-		</ul>
-	</div>
-</div>
+    <div class="card-deck">
+      {% for el_user in users %}
+      <div class="col-sm-2" style="padding-top: 1%">
+        <form action="/stats" method="POST">
+        <div class="card" style="min-width: 140px">
+          <a href="/user/{{el_user.username}}">
+            <img src="/thumbnails/{{el_user.profile_pic}}"  class="card-img-top">
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">{{ el_user.username }}</h5><br>
+            <p class="card-text">
+            {% if user.privileges < 2 %}
+             <button class="btn btn-primary" type="submit" name = "reset" value = {{el_user.id}} title="Восстановить доступ на один пост"> Restore </button> 
+             <button class="btn btn-danger" type="submit" name = "block" value = {{el_user.id}} title="Заблокировать доступ"> Block </button>
+            {%- endif %}
+            </p>
+          </div>
+          <div class="card-footer">
+            <small class="text-muted">Последний пост: {{el_user.last_post.strftime("%Y-%m-%d %H:%M")}}</small>
+          </div>
+        </div>
+      </form>
+      </div>
+      {% endfor %}
+    </div>
+
 {% endblock %}
