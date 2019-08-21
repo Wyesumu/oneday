@@ -4,3 +4,5 @@ env
 images
 resize
 thumbnails
+project-database.db
+config.py
