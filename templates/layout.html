@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
-  	<meta charset="utf-8">
+      <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <link rel="icon" href="/static/favicon.ico">
       <title>{% block title %}{% endblock %}</title>
       <link rel="stylesheet" href="/static/bootstrap.css">
       <script src = "/static/jquery-3.4.1.min.js"> </script>
@@ -15,7 +16,7 @@
       <header>
          <div class="row top-row">
            <div class = "col">
-              <nav class="navbar navbar-light navbar-expand-md">
+              <nav class="navbar navbar-dark bg-dark navbar-expand-md">
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar1">
                   <span class="navbar-toggler-icon"></span>
                 </button>
@@ -28,32 +29,60 @@
                       <a class="nav-link" href="/stats">Участники</a>
                     </li>
                     <li class="nav-item nav-tabs {%if request.path == '/upload'%}nav-selected{%endif%}">
-                      <a class="nav-link" href="/upload">Загрузить фото</a>
+                      <a class="nav-link" href="/upload">Загрузка</a>
                     </li>
                     <li class="nav-item nav-tabs {%if request.path == '/cal'%}nav-selected{%endif%}">
                       <a class="nav-link" href="/cal">Календарь</a>
                     </li>
-                    <li class="div" style ="padding-top: 1%">
-                      {% if time_left -%}
-                        <a href="/refresh_time" title="Обновить таймер">{{time_left}}</a>
-                      {%- endif %}
+                    {% if stages %}
+		                <li class="nav-item dropdown nav-tabs">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Этапы
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        {% for stage in stages %}
+                          <a class="dropdown-item" href="?stage={{stage.id}}">{{stage}}</a>
+                        {% endfor %}
+                      </div>
                     </li>
+                    {%endif%}
+                    {% if user%}
+                      {% if user.privileges < 2%}
+                      <li class="nav-item nav-tabs">
+                        <a class="nav-link" href="/admin/user">Админка</a>
+                      </li>
+                      {% endif %}
+                    {% endif %}
                   </ul>
                 </div>
               </nav>
            </div>
-
-           <div align="right" class="col">
-            {%if username %}
-             <form class="nav-link" action="/exit" method="POST">
-               {{ username }} <input type ="submit" class="btn btn-danger" value="X" name="exit">
-             </form>
+          <div class="col">
+            {%if user.username%}
+            <nav class="navbar navbar-dark bg-dark navbar-expand">
+              <ul class="navbar-nav mr-auto profile_drop">
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <img src="/thumbnails/{{user.profile_pic}}" height="20" width="20">
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="navbarDropdown" style="right: 0; left: auto;">
+                    <a href="/user/{{user.username}}" class="dropdown-item"> Signed in as: <br> <b>{{user.username}}</b></a>
+                    {%- if time_left -%}
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item" href="/refresh_time" title="Обновить таймер">{{time_left}}</a>
+                    {%- endif %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/exit"> Sign out</a>
+                  </div>
+                </li>
+              </ul>
+            </nav>
             {%else%}
-              <form class="nav-link" action="/login" method="GET">
+              <form class="nav-link" action="/login" method="GET" align="right">
                <input type ="submit" class="btn btn-success" value="Войти">
              </form>
             {%endif%}
-           </div>
+          </div>
          </div>
          {% for message in get_flashed_messages() %}
          <div class="alert alert-warning">
