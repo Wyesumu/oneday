@@ -1,0 +1,53 @@
+{% extends 'layout.html' %}
+{% block title %}{{data.username}} profile{% endblock %}
+{% block content %}
+<form autocomplete="off" action="" method="POST" enctype=multipart/form-data>
+  <div class="row profile">
+    <div class="col-md-3 profile-img">
+      <img src="/thumbnails/{{data.profile_pic}}"  alt="{{user.username}}" class="img-rounded">
+      {%if user.username == data.username%}
+      <div class="file btn btn-lg btn-primary" title = "После загрузки необходимо нажать Save">
+        Change Photo
+        <input type="file" name="file"/>
+      </div>
+      {%endif%}
+    </div>
+    <div class="col-md-6 details">
+      <blockquote>
+        <h5>{{data.username}}</h5>
+        <small><cite title="Source Title">Chicago, United States of America  <i class="icon-map-marker"></i></cite></small>
+      </blockquote>
+      <p>
+        <b>Всего работ</b> {{data.images|length}} <br>
+        <b>Days survived</b> {{data.survived.days}} <br>
+        <b>Последний пост</b> {{data.last_post}}
+        {{data.winner_of}}
+      </p>
+      {%if user.username == data.username%}
+      <input type="submit" value="Save" class="btn btn-block btn-success" style="width: 16%;">
+      {%endif%} 
+   </div>
+  </div>
+</form>
+<hr>
+
+    <h4>Работы:</h4>
+		<div class="card-deck">
+    	{% for image in data.images %}
+      <div class="col-sm-2" style="padding-top: 1%">
+    		<div class="card" style="min-width: 140px">
+    			<a href="/image/{{image.id}}">
+    				<img src="/thumbnails/{{ image.addr }}"  class="card-img-top">
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">{{ image.name }}</h5><br>
+            <p class="card-text">Автор <a href="/user/{{image.username}}">{{ image.username }}</a></p>
+          </div>
+          <div class="card-footer">
+            <small class="text-muted">{{ image.date.strftime("%Y-%m-%d %H:%M") }}</small>
+          </div>
+    		</div>
+      </div>
+    	{% endfor %}
+    </div>
+{% endblock %}
