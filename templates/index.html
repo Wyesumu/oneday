@@ -1,27 +1,41 @@
 {% extends 'layout.html' %}
 {% block title %}Главная{% endblock %}
 {% block content %}
-{% if data[0]%}
-  {% if stages[data[0].stage-1].user_win %}
+
+{% if data.items[0]%}
+  {% if stages[data.items[0].stage-1].user_win %}
   <div class="jumbotron">
     <h1 class="display-4">Этап завершен!</h1>
-    <p class="lead">Победителем оказался участник <a href="/user/{{stages[data[0].stage-1].user}}">{{stages[data[0].stage-1].user}}</a>, продержавшийся {{stages[data[0].stage-1].user.survived.days}} дней!</p>
+    <p class="lead">Победителем оказался участник <a href="/user/{{stages[data.items[0].stage-1].user}}">{{stages[data.items[0].stage-1].user}}</a>, продержавшийся {{stages[data.items[0].stage-1].user.survived.days}} дней!</p>
     <hr class="my-4">
-    <p>Этап начался {{stages[data[0].stage-1].start_date}} и завершился {{stages[data[0].stage-1].end_date}}.</p> 
-    <p>Всего участниками было загружено {{stages[data[0].stage-1].images|length}} работ(ы).</p>
+    <p>Этап начался {{stages[data.items[0].stage-1].start_date}} и завершился {{stages[data.items[0].stage-1].end_date}}.</p> 
+    <p>Всего участниками было загружено {{stages[data.items[0].stage-1].images|length}} работ(ы).</p>
   </div>
   {% endif %}
 {% endif %}
 		<div class="card-deck">
-    	{% for image in data %}
+    	{% for image in data.items %}
       <div class="col-sm-2" style="padding-top: 1%">
     		<div class="card" style="min-width: 140px">
+          {%if image.extras %}
+          <div class="img-count-wrap">
+            <span>
+              <span class="counter"></span>
+              {{image.extras|length + 1}}
+            </span>
+          </div>
+          {% endif %}
     			<a href="/image/{{image.id}}">
-    				<img src="/thumbnails/{{ image.addr }}"  class="card-img-top">
+    				<img src="/{{config['THUMBNAIL_FOLDER']}}/{{ image.addr }}"  class="card-img-top">
           </a>
           <div class="card-body">
-            <h5 class="card-title">{{ image.name }}</h5><br>
-            <p class="card-text">Автор <a href="/user/{{image.username}}">{{ image.username }}</a></p>
+            <h5 class="card-title">{{ image.name }}</h5>
+            <br>
+            <p class="card-text">
+              <a href="/user/{{image.username}}"><img class="rounded-circle" src="/{{config['THUMBNAIL_FOLDER']}}/{{image.username.profile_pic}}" height="16" width="16" style="margin-right:4px;">
+                {{ image.username }}
+              </a>
+            </p>
           </div>
           <div class="card-footer">
             <small class="text-muted">{{ image.date.strftime("%Y-%m-%d %H:%M") }}</small>
@@ -30,4 +44,34 @@
       </div>
     	{% endfor %}
     </div>
+
+  <nav style="padding-top: 1%">
+    <ul class="pagination justify-content-center">
+      <li class="page-item">
+        {% if data.page != 1%}
+          <a class="page-link" href="{{ url_for('index', page=data.prev_num, stage = request.args.get('stage')) }}">Prev</a>
+        {% else %}
+          <a class="page-link disabled">Prev</a>
+        {% endif %}
+      </li>
+      {%- for page in data.iter_pages() %}
+        {% if page %}
+          {% if page != data.page %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('index', page=page,stage = request.args.get('stage')) }}">{{ page }}</a></li>
+          {% else %}
+            <li class="page-item active"><a class="page-link" href="{{ url_for('index', page=page,stage = request.args.get('stage')) }}">{{ page }}</a></li>
+          {% endif %}
+        {% else %}
+          <span class=ellipsis>…</span>
+        {% endif %}
+      {%- endfor %}
+      <li class="page-item">
+        {% if data.page != data.pages%}
+          <a class="page-link" href="{{ url_for('index', page=data.next_num,stage = request.args.get('stage')) }}">Next</a>
+        {% else %}
+          <a class="page-link disabled">Next</a>
+        {% endif %}
+      </li>
+    </ul>
+  </nav>
 {% endblock %}
