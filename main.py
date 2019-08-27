@@ -29,6 +29,9 @@ bcrypt = Bcrypt(app)
 app.secret_key = config.secret_key
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + config.db_file
+app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
+app.config['THUMBNAIL_FOLDER'] = config.THUMBNAIL_FOLDER
+app.config['RESIZE_FOLDER'] = config.RESIZE_FOLDER
 #app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
@@ -47,13 +50,13 @@ class User(db.Model):
 	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	username = db.Column(db.String())
 	Email = db.Column(db.String())
-	FullName = db.Column(db.String())
+	about = db.Column('FullName', db.String())
 	password = db.Column(db.String())
 	privileges = db.Column(db.Integer, db.ForeignKey("privilege.id"), nullable=False, default = 3)
-	images = db.relationship('Image', backref='users', lazy=True)
+	images = db.relationship('Image', backref='users', lazy=True, order_by="Image.id")
 	last_post = db.Column(db.DateTime)
 	winner_of = db.relationship('Stage', backref='user_won', lazy=True)
-	profile_pic = db.Column(db.String(), default="default_pic.jpg")
+	profile_pic = db.Column(db.String(), default="default_pic.png")
 
 	def __repr__(self):
 		return self.username
@@ -136,7 +139,8 @@ def getLastDate(user_id = None, stage_id = Stage.query.all()[-1].id):
 			datetime_list.append(image.date)
 		date = (max(datetime_list)) #and find the most recent one
 	except ValueError: #except if there's no any works in db (in case of new user)
-		date = dt.now() - timedelta(days=1) #and if so return date {today - 1 day} so new user will have two days to upload first post
+		date = Stage.query.all()[-1].start_date #and if so return date {today - 1 day} so new user will have two days to upload first post
+		#dt.now() - timedelta(days=1) 
 	return date
 
 def time_left(): #calculate how many time left until block
@@ -265,9 +269,7 @@ def login():
 			if bcrypt.check_password_hash(user_data.password, str(password)): #compare user input and password hash from db
 				#set session info in crypted session cookie
 				flask.session['logged'] = "yes"
-				#flask.session['username'] = login
 				flask.session['user_id'] = user_data.id
-				#flask.session['privileges'] = user_data.privileges
 				flask.session['last_post'] = getLastDate().strftime("%Y-%m-%d %H:%M")
 				return flask.redirect(flask.url_for("index"))
 			else:
@@ -316,15 +318,17 @@ def exit():
 def index():
 	#get posts from db for gallery
 	stage_id = flask.request.args.get("stage")
+	page = flask.request.args.get('page', type=int, default=1)
 	stages = Stage.query.all()
 	if stage_id:
-		data = Image.query.filter_by(stage = stage_id).order_by(Image.id.desc())
+		data = Image.query.filter_by(stage = stage_id).order_by(Image.id.desc()).paginate(page, 30, False)
 		if stages[int(stage_id)-1].user_win:
 			User.survived = getLastDate(user_id = stages[int(stage_id)-1].user_win, stage_id=stage_id) - stages[int(stage_id)-1].start_date
 	else:
-		data = Image.query.filter_by(stage = stages[-1].id).order_by(Image.id.desc())
+		data = Image.query.filter_by(stage = stages[-1].id).order_by(Image.id.desc()).paginate(page, 30, False)
 		if stages[-1].user_win:
 			User.survived = getLastDate(user_id = stages[-1].user_win) - stages[-1].start_date
+
 	return flask.render_template("index.html", stages=stages, data=data, user=getUser(), time_left=time_left())
 
 
@@ -336,15 +340,32 @@ def user_gallery(username):
 		User.survived = getLastDate(user_id = data.id) - Stage.query.all()[-1].start_date
 		return flask.render_template("profile.html", data=data, user=getUser())
 	else:
-		files = flask.request.files.getlist("file")
 		user = getUser()
+
+		files = flask.request.files.getlist("file")
 		if files[0] and allowed_file(files):
-			image = resize_and_crop(files[0], (256,256), "middle")
 			filename = "profile_" + str(randrange(10000,100000)) + '.' + files[0].filename.rsplit('.', 1)[1].lower()
-			image.save(os.path.join(config.THUMBNAIL_FOLDER, filename))
+			try:
+				image = resize_and_crop(files[0], (256,256), "middle")
+				image.save(os.path.join(config.THUMBNAIL_FOLDER, filename))
+			except Exception as e:
+				flask.flash(e)
+
+			if user.profile_pic != 'default_pic.png':
+				try:
+					os.remove(config.THUMBNAIL_FOLDER +'/'+ user.profile_pic)
+				except Exception as e:
+					flask.flash(e)
+
 			user.profile_pic = filename
-			db.session.commit()
 			flask.flash("Загружено")
+
+			user.username = flask.request.form['name']
+			user.about = flask.request.form['about']
+			db.session.commit()
+		else:
+			flask.flash("Не удалось загрузить изображение: неподходящий тип")
+
 		return flask.redirect(flask.url_for("stats"))
 
 
