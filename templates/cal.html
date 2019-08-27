@@ -2,36 +2,8 @@
 {% block header %}
 <link href="/static/cal/fullcalendar.min.css" rel='stylesheet' />
 <link href="/static/cal/fullcalendar.print.css" rel='stylesheet' media='print' />
-<script src="/static/cal/lib/moment.min.js"></script>
-<script src="/static/cal/lib/jquery.min.js"></script>
-<script src="/static/cal/fullcalendar.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('#calendar').fullCalendar({
-            header: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'month,agendaWeek,agendaDay'
-            },
-            editable: false,
-            eventLimit: true, // allow "more" link when too many events
-            events: {
-                url: 'data',
-                error: function() {
-                    $('#script-warning').show();
-                }
-            },
-            loading: function(bool) {
-                $('#loading').toggle(bool);
-            }
-        });
-    });
-</script>
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-    }
+
     #script-warning {
         display: none;
         background: #eee;
@@ -65,4 +37,31 @@
 
     <div id='calendar'></div>
 
+{%endblock%}
+{%block script%}
+<script src="/static/cal/lib/moment.min.js"></script>
+<script src="/static/cal/lib/jquery.min.js"></script>
+<script src="/static/cal/fullcalendar.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#calendar').fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            editable: false,
+            eventLimit: true, // allow "more" link when too many events
+            events: {
+                url: 'data',
+                error: function() {
+                    $('#script-warning').show();
+                }
+            },
+            loading: function(bool) {
+                $('#loading').toggle(bool);
+            }
+        });
+    });
+</script>
 {%endblock%}
