@@ -2,30 +2,35 @@
 {% block title %}Просмотр изображения{% endblock %}
 {% block content %}
     <div class="row align-self-center image-desc">
-      <div class="col-md-6">
-        <h4><b>{{image.name}}</b></h4>
-        <small>by: <a href="/user/{{image.username}}">{{ image.username }}</a> {{image.date}}</small>
+      <div class="media">
+        <a href="/user/{{image.username}}">
+          <img class="rounded mr-3" src="/{{config['THUMBNAIL_FOLDER']}}/{{image.username.profile_pic}}" height="50" width="50">
+        </a>
+        <div class="media-body">
+          <h4><b>{{image.name}}</b></h4>
+          <small>by: <a href="/user/{{image.username}}">{{ image.username }}</a> {{image.date}}</small>
+        </div>
       </div>
-      {%if user.username == image.username or user.privileges < 2 %}
-      <div class="col-md-6" align="right">
-        <form action="/image/{{image.id}}" method="POST">
-          <button class="btn btn-danger" type="submit" name = "delete"> Удалить </button> 
-        </form>
-      </div>
-      {%endif%}
     </div>
     <div class="row">
-      <div class="col">
-        <a href="/images/{{image.addr}}" title="Открыть оригинал">
-          <img src="/resize/{{ image.addr }}" class="img-fluid mx-auto d-block">
-        </a>
-      </div>
+        <div class="img-wrap">
+          {%if user.username == image.username or user.privileges < 2 %}
+            <span class="close">
+              <form action="/image/{{image.id}}" method="POST">
+                <button class="btn btn-danger" type="submit" name = "delete"> X </button> 
+              </form>
+            </span>
+          {%endif%}
+          <a href="/{{config['UPLOAD_FOLDER']}}/{{image.addr}}" title="Открыть оригинал">
+            <img src="/{{config['RESIZE_FOLDER']}}/{{ image.addr }}" class="img-fluid mx-auto d-block">
+          </a>
+        </div>
     </div>
     {%for image in image.extras:%}
     <div class="row">
       <div class="col">
-        <a href="/images/{{image.addr}}" title="Открыть оригинал">
-          <img src="/resize/{{ image.addr }}" class="img-fluid mx-auto d-block" style="padding: 1%">
+        <a href="/{{config['UPLOAD_FOLDER']}}/{{image.addr}}" title="Открыть оригинал">
+          <img src="/{{config['RESIZE_FOLDER']}}/{{ image.addr }}" class="img-fluid mx-auto d-block" style="padding: 1%">
         </a>
       </div>
     </div>
