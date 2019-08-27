@@ -7,7 +7,7 @@
         <form action="/stats" method="POST">
         <div class="card" style="min-width: 140px">
           <a href="/user/{{el_user.username}}">
-            <img src="/thumbnails/{{el_user.profile_pic}}"  class="card-img-top">
+            <img src="/{{config['THUMBNAIL_FOLDER']}}/{{el_user.profile_pic}}"  class="card-img-top">
           </a>
           <div class="card-body">
             <h5 class="card-title">{{ el_user.username }}</h5><br>
